@@ -1,0 +1,200 @@
+{
+  "info": {
+    "name": "Urban Guardian API",
+    "description": "REST API for Israeli real estate insights: geocode, cadastral, planning, guardian report.\n\n**Prerequisite:** Start the API server:\n```bash\nuvicorn api:app --reload --port 8000\n```\nBase URL: http://localhost:8000",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000" },
+    { "key": "lat", "value": "31.784" },
+    { "key": "lon", "value": "35.221" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health",
+            "description": "Health check for load balancers and connectivity."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 1 — Geocode",
+      "item": [
+        {
+          "name": "POST Geocode — Jerusalem (English)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address\": \"22 HaNevi'im St, Jerusalem\"\n}"
+            },
+            "url": "{{baseUrl}}/geocode_address",
+            "description": "Phase 1: Convert address to WGS84 (lat, lon). Returns latitude, longitude, display_name on success; or error, suggestions when not found."
+          }
+        },
+        {
+          "name": "POST Geocode — Tel Aviv (Hebrew)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address\": \"דיזנגוף 100, תל אביב\"\n}"
+            },
+            "url": "{{baseUrl}}/geocode_address",
+            "description": "Phase 1: Hebrew address geocode."
+          }
+        },
+        {
+          "name": "POST Geocode — Invalid (empty address)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address\": \"\"\n}"
+            },
+            "url": "{{baseUrl}}/geocode_address",
+            "description": "Expect 400 Bad Request."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 2 — Cadastral",
+      "item": [
+        {
+          "name": "POST Get Cadastral Data (Gush/Helka)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": {{lat}},\n  \"longitude\": {{lon}}\n}"
+            },
+            "url": "{{baseUrl}}/get_cadastral_data",
+            "description": "Phase 2: Get block (gush) and parcel (helka) at WGS84 coordinates. Currently returns stub until GovMap cadastral integration."
+          }
+        },
+        {
+          "name": "POST Get Cadastral — Tel Aviv coords",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 32.0853,\n  \"longitude\": 34.7818\n}"
+            },
+            "url": "{{baseUrl}}/get_cadastral_data",
+            "description": "Cadastral at Tel Aviv coordinates."
+          }
+        },
+        {
+          "name": "POST Get Cadastral — Invalid (missing body)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": "{{baseUrl}}/get_cadastral_data",
+            "description": "Expect 400 Bad Request."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 2 — Urban Plans",
+      "item": [
+        {
+          "name": "POST Get Urban Plans (Plans & Permits)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": {{lat}},\n  \"longitude\": {{lon}}\n}"
+            },
+            "url": "{{baseUrl}}/get_urban_plans",
+            "description": "Phase 2: Get zoning (תב\"ע) and building permits at WGS84. Currently returns stub until ArcGIS integration."
+          }
+        },
+        {
+          "name": "POST Get Urban Plans — Invalid body",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"lat\": \"invalid\"}" },
+            "url": "{{baseUrl}}/get_urban_plans",
+            "description": "Expect 400 Bad Request."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 3 — Guardian Report",
+      "item": [
+        {
+          "name": "POST Generate Guardian Report (EN)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": {{lat}},\n  \"longitude\": {{lon}},\n  \"address\": \"22 HaNevi'im St, Jerusalem\",\n  \"language\": \"en\"\n}"
+            },
+            "url": "{{baseUrl}}/generate_guardian_report",
+            "description": "Phase 3: Synthesize risk/opportunity report. language: en or he. Currently returns stub until AI synthesis."
+          }
+        },
+        {
+          "name": "POST Generate Guardian Report (HE)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": {{lat}},\n  \"longitude\": {{lon}},\n  \"language\": \"he\"\n}"
+            },
+            "url": "{{baseUrl}}/generate_guardian_report",
+            "description": "Report in Hebrew."
+          }
+        },
+        {
+          "name": "POST Generate Guardian Report — Invalid (missing coords)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": "{{baseUrl}}/generate_guardian_report",
+            "description": "Expect 400 Bad Request."
+          }
+        }
+      ]
+    },
+    {
+      "name": "E2E — Full Flow (Concerned Homebuyer)",
+      "item": [
+        {
+          "name": "1. Geocode → 2. Cadastral → 3. Plans → 4. Report",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address\": \"22 HaNevi'im St, Jerusalem\"\n}"
+            },
+            "url": "{{baseUrl}}/geocode_address",
+            "description": "Step 1: Geocode. Use returned lat/lon in next requests: get_cadastral_data, get_urban_plans, generate_guardian_report."
+          }
+        }
+      ]
+    }
+  ]
+}

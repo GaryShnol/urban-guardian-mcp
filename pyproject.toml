@@ -1,0 +1,14 @@
+[project]
+name = "urban-guardian-mcp"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.115.0",
+    "fastmcp>=2.0,<3",
+    "httpx>=0.28.0",
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "uvicorn[standard]>=0.32.0",
+]

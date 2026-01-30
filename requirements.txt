@@ -1,0 +1,14 @@
+# Urban Guardian MCP Server
+# Python >= 3.10
+# Pin < 3 for production until FastMCP 3.0 migration
+fastmcp>=2.0,<3
+httpx>=0.28.0
+
+# REST API (Postman testing)
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+
+# Tests
+pytest>=7.0.0
+pytest-cov>=4.0.0
+ 
