@@ -78,8 +78,46 @@ def test_api_get_urban_plans_invalid_body():
     assert resp.status_code == 400
 
 
+def test_api_get_spatial_mining():
+    """POST /get_spatial_mining returns within_100m, within_500m, within_1000m, note."""
+    resp = client.post(
+        "/get_spatial_mining",
+        json={"latitude": 31.784, "longitude": 35.221},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "within_100m" in data and "within_500m" in data and "within_1000m" in data
+    assert "note" in data
+    assert "plans" in data["within_100m"] and "permits" in data["within_100m"]
+
+
+def test_api_get_spatial_mining_invalid_body():
+    """POST /get_spatial_mining with missing lat/lon returns 400."""
+    resp = client.post("/get_spatial_mining", json={})
+    assert resp.status_code == 400
+
+
+def test_api_get_multi_radius_search():
+    """POST /get_multi_radius_search returns bedroom_50m, permits_100m, ..., summary, note."""
+    resp = client.post(
+        "/get_multi_radius_search",
+        json={"latitude": 31.784, "longitude": 35.221},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "bedroom_50m" in data and "permits_100m" in data and "value_800m" in data
+    assert "summary" in data and "note" in data
+    assert "plans" in data["bedroom_50m"] and "permits" in data["bedroom_50m"]
+
+
+def test_api_get_multi_radius_search_invalid_body():
+    """POST /get_multi_radius_search with missing lat/lon returns 400."""
+    resp = client.post("/get_multi_radius_search", json={})
+    assert resp.status_code == 400
+
+
 def test_api_generate_guardian_report():
-    """POST /generate_guardian_report returns report, risks, opportunities, language."""
+    """POST /generate_guardian_report returns report, risks, opportunities, guardian_score, consult, language."""
     resp = client.post(
         "/generate_guardian_report",
         json={
@@ -92,7 +130,10 @@ def test_api_generate_guardian_report():
     assert resp.status_code == 200
     data = resp.json()
     assert "report" in data and "risks" in data and "opportunities" in data and "language" in data
+    assert "guardian_score" in data and "consult" in data
     assert data["language"] == "en"
+    assert data["report"] is not None
+    assert data["guardian_score"] is None or 0 <= data["guardian_score"] <= 100
 
 
 def test_api_generate_guardian_report_language_he():

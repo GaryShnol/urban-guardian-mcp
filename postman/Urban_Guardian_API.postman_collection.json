@@ -122,7 +122,7 @@
               "raw": "{\n  \"latitude\": {{lat}},\n  \"longitude\": {{lon}}\n}"
             },
             "url": "{{baseUrl}}/get_urban_plans",
-            "description": "Phase 2: Get zoning (תב\"ע) and building permits at WGS84. Currently returns stub until ArcGIS integration."
+            "description": "Phase 2: Get zoning (תב\"ע) and building permits at WGS84. Returns plans and permits from GovMap WFS."
           }
         },
         {

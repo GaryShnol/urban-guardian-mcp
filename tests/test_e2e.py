@@ -126,14 +126,15 @@ def test_e2e_guardian_report_can_hold_noise_alert_and_opportunity():
     report = _generate_guardian_report_impl(31.784, 35.221, address=E2E_ADDRESS, language="en")
     assert isinstance(report["risks"], list)
     assert isinstance(report["opportunities"], list)
-    # When implemented, risks might include: Noise Alert, View Obstruction, In Deposit notice
+    # Structure can hold additional risk/opportunity (e.g. from external source)
     risks_copy = report["risks"] + [
         {"type": "noise", "message": "Light Rail construction; 24/7 noise for 24 months."}
     ]
     opportunities_copy = report["opportunities"] + [
         {"type": "value_increase", "message": "Light Rail station proximity ~15% value increase."}
     ]
-    assert len(risks_copy) == 1 and len(opportunities_copy) == 1
+    assert len(risks_copy) == len(report["risks"]) + 1
+    assert len(opportunities_copy) == len(report["opportunities"]) + 1
 
 
 def test_e2e_cadastral_returns_legal_id_structure():
