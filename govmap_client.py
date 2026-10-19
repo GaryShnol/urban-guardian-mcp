@@ -17,6 +17,8 @@ Validates input, Israel bbox; returns WGS84 or raises AddressNotFoundError with 
 
 import os
 import re
+import threading
+import time
 from urllib.parse import quote
 
 import httpx
@@ -33,6 +35,11 @@ DEFAULT_GOVMAP_SEARCH_URL = "https://www.govmap.gov.il/Searching/SearchRest.ashx
 
 # Fallback when GovMap returns non-JSON or no results (Nominatim usage policy: identify app)
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
+# Nominatim public-service policy: max 1 request/second (https://operations.osmfoundation.org/policies/nominatim/)
+_NOMINATIM_MIN_INTERVAL_S = 1.0
+_nominatim_lock = threading.Lock()
+_nominatim_last_call = float("-inf")
+
 NOMINATIM_USER_AGENT = "UrbanGuardianMCP/1.0 (Israeli address geocode; fallback when GovMap unavailable)"
 
 # GovMap API endpoints for querying plans and layers
@@ -232,6 +239,12 @@ def _geocode_via_nominatim(address: str) -> dict | None:
         "countrycodes": "il",
     }
     headers = {"User-Agent": NOMINATIM_USER_AGENT}
+    global _nominatim_last_call
+    with _nominatim_lock:  # enforce the public-service rate limit (1 req/s) across threads
+        wait = _NOMINATIM_MIN_INTERVAL_S - (time.monotonic() - _nominatim_last_call)
+        if wait > 0:
+            time.sleep(wait)
+        _nominatim_last_call = time.monotonic()
     try:
         with httpx.Client(timeout=DEFAULT_TIMEOUT) as client:
             resp = client.get(NOMINATIM_URL, params=params, headers=headers)
@@ -629,6 +642,8 @@ def multi_radius_search(
         "has_any_lifestyle": _count(result.get("lifestyle_300m", {})) > 0,
         "has_any_plans_500m": _count(result.get("plans_500m", {})) > 0,
         "has_any_value": _count(result.get("value_800m", {})) > 0,
+        # False => no permit layer is configured, so an empty permits list means "not queried", not "none exist".
+        "permit_layers_configured": bool(GOVMAP_PERMIT_LAYERS),
     }
     result["summary"] = summary
     result["note"] = "Multi-radius search by layer (bedroom 50m, permits 100m, lifestyle 300m, plans 500m, value 800m)."

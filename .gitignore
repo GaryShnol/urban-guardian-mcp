@@ -37,3 +37,7 @@ htmlcov/
 # OS
 .DS_Store
 Thumbs.db
+
+# Raw third-party data dumps (GovMap) — do not commit
+catalog_full.json
+SUCCESS_working_api.json
