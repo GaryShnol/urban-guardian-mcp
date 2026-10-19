@@ -30,6 +30,7 @@ from govmap_client import (
 )
 from guardian_score import (
     analyze_risks_detailed,
+    get_disclaimer,
     build_comprehensive_report,
     build_consult_text,
     build_report_text,
@@ -52,6 +53,8 @@ def _geocode_address_impl(address: str) -> dict:
         }
         if "source" in result:
             out["source"] = result["source"]
+            if result["source"] == "nominatim":
+                out["attribution"] = "© OpenStreetMap contributors (ODbL) — https://www.openstreetmap.org/copyright"
         return out
     except AddressNotFoundError as e:
         return {
@@ -319,6 +322,8 @@ def _generate_guardian_report_impl(
         "status": score_result.get("status"),
         "status_note": score_result.get("status_note"),
         "language": language,
+        "data_limitations": score_result.get("data_limitations") or [],
+        "disclaimer": get_disclaimer(language),
         # Summary environmental data (user-friendly)
         "noise_data": {
             "noise_day_db": noise_data.get("noise_day_db"),
@@ -371,7 +376,11 @@ def generate_guardian_report(
     include_raw_data: bool = False,
 ) -> dict:
     """
-    Phase 3 — Urban Intelligence: Synthesize cadastral + planning data into a comprehensive advisory report.
+    Phase 3 — Urban Intelligence: Synthesize cadastral + planning data into an indicative, educational report.
+
+    EDUCATIONAL DEMO ONLY — not legal, planning, appraisal, brokerage or investment advice. Data comes from
+    third-party sources and may be incomplete; an empty result does not mean nothing exists. Verify with
+    official sources and a qualified professional. See DISCLAIMER.md.
 
     ENHANCED VERSION: Automatically analyzes risks and provides detailed explanations.
 
@@ -455,6 +464,9 @@ def get_plan_details(
     # Get enhanced plan info from GovMap with MAVAT links and timeline
     plan_info = get_detailed_plan_info(plan_number, language=language, coordinates=coordinates)
     
+    if isinstance(plan_info, dict):
+        plan_info.setdefault("disclaimer", get_disclaimer(language))
+
     if "error" in plan_info:
         return plan_info
     

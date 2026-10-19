@@ -16,6 +16,24 @@ from __future__ import annotations
 BASE_SCORE = 50
 SCORE_MIN, SCORE_MAX = 0, 100
 
+# --- Educational-use disclaimer (attached to every report) ---
+DISCLAIMER_EN = (
+    "Educational/demo project. Not legal, planning, engineering, appraisal, brokerage or investment advice. "
+    "Data comes from third-party sources, may be incomplete or outdated, and the absence of a result does not mean "
+    "that no permit, plan or restriction exists. The score is an illustrative heuristic. "
+    "Verify with official sources and a qualified professional. Provided AS IS, without warranty. See DISCLAIMER.md."
+)
+DISCLAIMER_HE = (
+    "פרויקט לימודי/הדגמתי. אינו ייעוץ משפטי, תכנוני, הנדסי, שמאי, תיווך או השקעות. "
+    "המידע ממקורות צד שלישי, עלול להיות חלקי או לא מעודכן, והיעדר תוצאה אינו מעיד שאין היתר, תוכנית או הגבלה. "
+    "הציון הוא היוריסטיקה להמחשה. יש לאמת מול גורמים רשמיים ואיש מקצוע מוסמך. ניתן כמות שהוא, ללא אחריות. ראו DISCLAIMER.md."
+)
+
+
+def get_disclaimer(language: str = "en") -> str:
+    """Return the educational-use disclaimer in the requested language ("he" or "en")."""
+    return DISCLAIMER_HE if language == "he" else DISCLAIMER_EN
+
 # Pros (add points)
 PROS_CADASTRAL_IDENTIFIED = 10  # Increased from 8 (legal clarity)
 PROS_NO_PERMITS_100M = 12
@@ -143,6 +161,7 @@ def compute_guardian_score(
     risks_points = 0
     pros: list[str] = []
     risks: list[str] = []
+    data_limitations: list[str] = []
 
     # --- Cadastral (status + pros) ---
     gush = cadastral.get("gush")
@@ -172,9 +191,17 @@ def compute_guardian_score(
         risks.append(
             f"Construction permit(s) between 50–100 m ({n100 - n50}) — some noise risk."
         )
+    permit_layers_configured = (multi_radius.get("summary") or {}).get("permit_layers_configured", True)
     if n50 == 0 and n100 == 0:
-        pros_points += PROS_NO_PERMITS_100M
-        pros.append("No construction permits within 100 m — low immediate noise risk.")
+        if permit_layers_configured:
+            pros_points += PROS_NO_PERMITS_100M
+            pros.append("No construction permits found in the queried data within 100 m (data may be incomplete).")
+        else:
+            # No permit layer was queried, so "nothing found" says nothing about real permits: no bonus.
+            data_limitations.append(
+                "Building-permit data was not queried (no permit layer configured), so the presence or absence "
+                "of nearby construction permits could not be assessed."
+            )
 
     # --- Plans by radius: open space, residential, proposed road, commercial ---
     plans_100 = _plans_in_radius(multi_radius, "permits_100m") or _plans_in_radius(
@@ -264,6 +291,7 @@ def compute_guardian_score(
         "risks": risks,
         "status": status,
         "status_note": status_note,
+        "data_limitations": data_limitations,
     }
 
 
@@ -427,6 +455,9 @@ def build_report_text(
             parts.append("יתרונות: " + " ".join(pros))
         if risks:
             parts.append("סיכונים: " + " ".join(risks))
+        if score_result.get("data_limitations"):
+            parts.append("מגבלות מידע: " + " ".join(score_result["data_limitations"]))
+        parts.append("הסתייגות: " + DISCLAIMER_HE)
         return " ".join(parts)
 
     parts = [
@@ -441,6 +472,9 @@ def build_report_text(
         parts.append(
             f"(Breakdown: base {breakdown.get('base', 50)} + pros {breakdown.get('pros_points', 0)} + risks {breakdown.get('risks_points', 0)}.)"
         )
+    if score_result.get("data_limitations"):
+        parts.append("Data limitations: " + " ".join(score_result["data_limitations"]))
+    parts.append("Disclaimer: " + DISCLAIMER_EN)
     return " ".join(parts)
 
 
@@ -535,16 +569,18 @@ def build_comprehensive_report(
             lines.append("")
         
         # Final recommendation
-        lines.append("🎯 המלצה סופית:")
+        lines.append("🎯 סיכום תיאורי (אינו המלצה):")
         if score >= 80:
-            lines.append("   ✅ דירה מומלצת! ציון גבוה, חסרונות מינוריים.")
-            lines.append("   💡 כדאי לבדוק את הפרטים בשטח אבל זה נראה מצוין.")
+            lines.append("   ציון גבוה יחסית לפי ההיוריסטיקה; לא זוהו חסרונות בולטים בנתונים שנבדקו.")
         elif score >= 65:
-            lines.append("   ✓ דירה טובה. יש כמה נקודות לתשומת לב.")
-            lines.append("   💡 בדוק את הסיכונים בשטח ושקול אם אתה מוכן לחיות איתם.")
+            lines.append("   ציון בינוני-גבוה; זוהו כמה נקודות שכדאי לבדוק.")
         else:
-            lines.append("   ⚠️  דירה בינונית. יש בעיות משמעותיות.")
-            lines.append("   💡 חשוב היטב או המשך לחפש.")
+            lines.append("   ציון נמוך יחסית; זוהו נקודות משמעותיות שכדאי לבדוק.")
+        lines.append("   💡 יש לאמת כל פריט מול הגורמים הרשמיים ואיש מקצוע מוסמך לפני קבלת החלטה כלשהי.")
+        for _lim in score_result.get("data_limitations") or []:
+            lines.append(f"   ⚠️  מגבלת מידע: {_lim}")
+        lines.append("")
+        lines.append("ℹ️  הסתייגות: " + DISCLAIMER_HE)
         
         lines.append("")
         lines.append("╚════════════════════════════════════════════════════════════╝")
@@ -611,16 +647,18 @@ def build_comprehensive_report(
             lines.append("")
         
         # Final recommendation
-        lines.append("🎯 Final Recommendation:")
+        lines.append("🎯 Descriptive summary (not a recommendation):")
         if score >= 80:
-            lines.append("   ✅ Recommended property! High score, minor drawbacks.")
-            lines.append("   💡 Worth checking details on-site, but looks excellent.")
+            lines.append("   Relatively high score under this heuristic; no prominent drawbacks in the data queried.")
         elif score >= 65:
-            lines.append("   ✓ Good property. Some points need attention.")
-            lines.append("   💡 Check risks on-site and consider if you can live with them.")
+            lines.append("   Moderate-to-high score; a few points are worth checking.")
         else:
-            lines.append("   ⚠️  Fair property. Significant issues present.")
-            lines.append("   💡 Think carefully or continue searching.")
+            lines.append("   Relatively low score; significant points are worth checking.")
+        lines.append("   💡 Verify every item with official sources and a qualified professional before any decision.")
+        for _lim in score_result.get("data_limitations") or []:
+            lines.append(f"   ⚠️  Data limitation: {_lim}")
+        lines.append("")
+        lines.append("ℹ️  Disclaimer: " + DISCLAIMER_EN)
         
         lines.append("")
         lines.append("╚════════════════════════════════════════════════════════════╝")

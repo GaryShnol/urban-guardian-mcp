@@ -132,7 +132,7 @@ Constants in `govmap_client`: `RADIUS_BEDROOM_M`, `RADIUS_PERMITS_M`, `RADIUS_HA
 | `FIXES_APPLIED.md` | WFS as primary method, layer name fixes |
 | `POSTMAN_CURL_COMMANDS.md` | cURL examples for WFS plans |
 | `DISCOVERED_LAYERS_ANALYSIS.md` | Catalog structure, WFS endpoint notes |
-| `catalog_full.json` | Full GovMap catalog (layer IDs, serviceLayerId, captions) |
+| `catalog_full.json` | Full GovMap catalog (layer IDs, serviceLayerId, captions). Not committed (third-party data); regenerate locally if needed. |
 
 ---
 

@@ -1,5 +1,8 @@
 # Urban Guardian (Israel)
 
+> **⚠️ Educational / demonstration project only — not advice, no warranty, use at your own risk.**
+> Output is not legal, planning, engineering, appraisal, brokerage or investment advice. Data comes from third-party sources, may be incomplete or wrong, and an empty result does not mean that no permit, plan or restriction exists. See [DISCLAIMER.md](./DISCLAIMER.md) (English + עברית).
+
 **MCP server & REST API for Israeli real estate intelligence** — geocoding, cadastral data, urban planning, and bilingual advisory reports from official government spatial sources.
 
 ---
@@ -407,6 +410,10 @@ The MCP server exposes these as tools so an AI agent can call them in sequence; 
 
 ---
 
-## License
+## License, disclaimer and data sources
 
-See repository settings. This project is for portfolio and demonstration purposes.
+- **Code:** [MIT License](./LICENSE) — provided "AS IS", without warranty. Educational and portfolio project; see [DISCLAIMER.md](./DISCLAIMER.md).
+- **Not affiliated** with the State of Israel, the Survey of Israel, GovMap, MAVAT or OpenStreetMap.
+- **Data is not covered by the MIT license.** Geospatial data © Survey of Israel (GovMap) and geocoding fallback data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright) (ODbL). Check each provider's current terms before running this against their services; in particular, GovMap terms may restrict commercial use, automated access and redistribution. This repository does not include GovMap data dumps.
+- **Nominatim:** the public instance is rate-limited to 1 request/second (enforced in code) and requires a descriptive User-Agent. Do not use this project for bulk geocoding. Run your own instance for anything beyond light, personal use.
+- **Do not run this as a public service** or present its output as advice to third parties without legal review.
